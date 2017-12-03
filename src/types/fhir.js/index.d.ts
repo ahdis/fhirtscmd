@@ -16,7 +16,6 @@ type Config = { baseUrl: string; auth?: Auth; credentials: string; headers?: Map
 // method could be refined to (GET|POST|PUT|DELETE)
 type RequestObj = { method: string; url: string, headers?: Map<string, string[]> }
 type ResponseObj = { status: number; headers?: Map<string, string[]>; config: any; data: IResource }
-
 type ReadObj = { "type": string; id?: string}
 
 /** create objects */
@@ -24,13 +23,12 @@ type Tag = { term: string; schema: string; label: string }
 
 type Entry = { resource: IResource; category?: Tag[] }
 
-//declare module fhir.js.src.adapters.native {
-
 declare function http(requestObj: RequestObj): Promise<IFhir>;
 
 // to declard headerFn function to get header, i.e. headerFn('Content')
 declare function succes(data: any, status: any, headerFn: any, config: Config): void;
 declare function error(data: any, status: any, headerFn: any, config: Config): void;
+
 
 export interface IFhir {
 

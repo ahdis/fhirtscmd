@@ -1,6 +1,7 @@
+/// <reference path="types/fhir.js/src/adapters/native/index.d.ts" />
 /// <reference path="types/fhir.js/index.d.ts" />
-import nativeFhir = require('fhir.js/src/adapters/native');
 import { IFhir, Config, ResponseObj, Entry, IResource, ReadObj } from 'fhir.js';
+import nativeFhir = require('fhir.js/src/adapters/native');
 
 export class HelloFhir {
 
@@ -87,7 +88,6 @@ export class HelloFhir {
 
             
             console.log("Step 3: Reading patient" +patientGiven+" "+ patientFamily+" with id back");
-
             let read : ReadObj = {
                 type: 'Patient'
             };
