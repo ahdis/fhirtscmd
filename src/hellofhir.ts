@@ -1,6 +1,6 @@
 /// <reference path="types/fhir.js/src/adapters/native/index.d.ts" />
 /// <reference path="types/fhir.js/index.d.ts" />
-import { IFhir, Config, ResponseObj, Entry, IResource, ReadObj } from 'fhir.js';
+import { IFhir, Config, ResponseObj, Entry, IResource, ResourceType, ReadObj, VReadObj } from 'fhir.js';
 import nativeFhir = require('fhir.js/src/adapters/native');
 
 export class HelloFhir {
@@ -15,7 +15,8 @@ export class HelloFhir {
     private createResponse: any = {};
 
     private config: Config = {
-        baseUrl: 'http://fhirtest.uhn.ca/baseDstu3',
+        //        baseUrl: 'http://fhirtest.uhn.ca/baseDstu3',
+        baseUrl: 'http://localhost:8080/baseDstu3/',
         credentials: 'same-origin'
     };
 
@@ -33,83 +34,144 @@ export class HelloFhir {
         // -> to convert add async to this and use await syntac
 
         try {
-            let patientId:string = "";
-            let patientGiven:string = "Fälix";
-            let patientFamily:string = "Müster";
-
-            let response: ResponseObj = await this.client.conformance({});
+            let patientId: string = "";
+            let patientVersionId: string = "";
+            let patientGiven: string = "Fälix";
+            let patientFamily: string = "Müster";
+            let debug: boolean = true;
+            //            let response: ResponseObj = await this.client.conformance({ "debug": true});
 
             console.log("Step 1: Calling conformance statement")
+            let response: ResponseObj = await this.client.conformance({});
             if (response.headers != undefined) {
                 console.log(response.status);
                 console.log(response.headers.get("server"))
                 console.log(response.headers.get("x-powered-by"))
             }
 
-            console.log("Step 2: Creating the patient" +patientGiven+" "+ patientFamily);
-            let entry: Entry = 
-            {
-                resource: {
-                    "resourceType": "Patient",
+            console.log("Step 2: Creating the patient" + patientGiven + " " + patientFamily);
+            let entry: Entry =
+                {
+                    resource: {
+                        "resourceType": "Patient",
                         "text": {
-                        "status": "generated",
-                            "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">"+patientGiven+" "+ patientFamily +"</div>"
-                    },
-                    "name": [
-                        {
-                            "family": ""+ patientFamily+"",
-                            "given": [ ""+ patientGiven + ""]
-                        }
-                    ],
+                            "status": "generated",
+                            "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">" + patientGiven + " " + patientFamily + "</div>"
+                        },
+                        "name": [
+                            {
+                                "family": patientFamily,
+                                "given": [patientGiven]
+                            }
+                        ],
                         "gender": "male",
-                            "birthDate": "1971-12-04",
-                                "address": [
-                                    {
-                                        "line": [
-                                            "Leidensweg 10"
-                                        ],
-                                        "city": "Specimendorf",
-                                        "postalCode": "9876"
-                                    }
-                                ]
+                        "birthDate": "1971-12-04",
+                        "address": [
+                            {
+                                "line": [
+                                    "Leidensweg 10"
+                                ],
+                                "city": "Specimendorf",
+                                "postalCode": "9876"
+                            }
+                        ]
+                    }
                 }
-            }            
-            
+
             response = await this.client.create(entry);
+
+            let createdPatient: IResource = response.data;
+
             if (response.headers != undefined) {
-                console.log("success");
                 console.log(response.status);
                 console.log(response.headers.get("location"))
-                console.log("id:"+response.data.id);
-                if (response.data.id!=undefined) {
+                console.log("id:" + response.data.id);
+                console.log("versionId:" + response.data.meta.versionId);
+                if (response.data.id != undefined) {
                     patientId = response.data.id;
+                    patientVersionId = response.data.meta.versionId;
                 }
             }
-
-            
-            console.log("Step 3: Reading patient" +patientGiven+" "+ patientFamily+" with id back");
-            let read : ReadObj = {
-                type: 'Patient'
-            };
-            read.id = patientId;
+            console.log("Step 3: Reading patient" + patientGiven + " " + patientFamily + " with id back");
+            let read: ReadObj = { id: patientId, type: "Patient" };
             response = await this.client.read(read)
 
             if (response.headers != undefined) {
-                console.log("success");
                 console.log(response.status);
-                console.log(response.headers.get("location"))
-                console.log("id: "+response.data.id);
-                console.log(response || [])
-                console.log("name :"+response.data.name[0]);
-                console.log("family :"+response.data.name[0].family);
-                console.log("given :"+response.data.name[0].given[0]);
+                console.log("id: " + response.data.id);
+
+                // astonished that this here works in typescript, name and family is not tpyed
                 if (response.data.name[0].family == patientFamily) {
                     console.log("family name matches")
                 }
-                if (response.data.name.given == patientGiven) {
+                if (response.data.name[0].given[0] == patientGiven) {
                     console.log("given name matches")
                 }
-                
+            }
+
+            console.log("Step 4: Retrieve the change history for all resources");
+            response = await this.client.history({});
+            if (response.headers != undefined) {
+                console.log(response.status);
+                console.log("total entries: " + response.data.total);
+            }
+
+            console.log("Step 5: Retrieve the change history for a particular resource type ");
+            response = await this.client.typeHistory({ type: "Patient" });
+            if (response.headers != undefined) {
+                console.log(response.status);
+                console.log("total entries: " + response.data.total);
+            }
+
+            console.log("Step 6: Update an existing resource by its id");
+            createdPatient.name[0].family = "Muster";
+            response = await this.client.update({ resource: createdPatient });
+            let updatedPatent: IResource = response.data;
+            if (response.headers != undefined) {
+                console.log(response.status);
+                if ("Muster" == response.data.name[0].family) {
+                    console.log("name updated");
+                } else {
+                    console.log("ERROR: name not updated");
+                }
+            }
+
+            console.log("Step 7: Read the state of a specific version of the resource");
+            response = await this.client.vread({ id: patientId, versionId: patientVersionId, type: "Patient" });
+            if (response.headers != undefined) {
+                console.log(response.status);
+
+                if (patientId == response.data.id) {
+                    console.log("patient id matches");
+                }
+                else {
+                    console.log("ERROR: patient id does not match");
+                }
+                if (patientVersionId == response.data.meta.versionId) {
+                    console.log("versionId matches");
+                }
+                else {
+                    console.log("ERROR: version Id does not match");
+                }
+                if ("Müster" == response.data.name[0].family) {
+                    console.log("name matches");
+                } else {
+                    console.log("ERROR: name does not match");
+                }
+            }
+
+            console.log("Step 8: Retrieve the change history for a particular resource");
+            response = await this.client.resourceHistory({ id: patientId, type: "Patient" });
+            if (response.headers != undefined) {
+                console.log(response.status);
+                console.log("total entries: " + response.data.total);
+            }
+
+            console.log("Step 9: Delete a resource");
+            updatedPatent.debug = true;
+            response = await this.client.delete({ resource: updatedPatent, debug:true });
+            if (response.headers != undefined) {
+                console.log(response.status);
             }
 
 
@@ -118,8 +180,8 @@ export class HelloFhir {
             console.log("error" + error)
         }
 
-       //  console.log(response || []);
-        
+        //  console.log(response || []);
+
         //            console.log(response.status);
         //            console.log(response.headers);
         //            if (response.data) {
