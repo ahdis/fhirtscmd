@@ -5,9 +5,9 @@
 /** resource interface */
 interface IResource {
     resourceType: string;
-    id? : string;
-    meta? : any;
-    text? : any;
+    id?: string;
+    meta?: any;
+    text?: any;
     [others: string]: any;
 }
 
@@ -18,16 +18,17 @@ type RequestObj = { method: string; url: string, headers?: Map<string, string[]>
 type ResponseObj = { status: number; headers?: Map<string, string[]>; config: any; data: IResource }
 
 /** set the debug property property to true to get console logging activated */
-type Minimal = { debug? : boolean}
+type Minimal = { debug?: boolean }
 
 /** FHIR Resource Type */
-type ResourceType =  { "type": string } & Minimal
-type ReadObj = { id: string} & ResourceType;
-type VReadObj = { versionId: string} & ReadObj;
+type ResourceType = { "type": string } & Minimal
+type ReadObj = { id: string } & ResourceType;
+type QueryObj = { query: any } & ResourceType;
+type VReadObj = { versionId: string } & ReadObj;
 
 /** Create Objects */
 type Tag = { term: string; schema: string; label: string }
-type Entry = { resource: IResource; category?: Tag[]} & Minimal
+type Entry = { resource: IResource; category?: Tag[] } & Minimal
 
 declare function http(requestObj: RequestObj): Promise<IFhir>;
 
@@ -48,7 +49,7 @@ export interface IFhir {
     read(resource: ReadObj): Promise<ResponseObj>;
 
     /** Retrieve the change history for all resources */
-    history(empty: Minimal):  Promise<ResponseObj>;
+    history(empty: Minimal): Promise<ResponseObj>;
 
     /** Retrieve the change history for a particular resource type */
     typeHistory(query: ResourceType): Promise<ResponseObj>;
@@ -64,16 +65,26 @@ export interface IFhir {
 
     /** Delete a resource */
     delete(query: Entry): Promise<ResponseObj>;
+
+    /** The transaction interactions submit a set of actions to perform on a server in a single HTTP request/response. */
+    transaction(bundle: Entry): Promise<ResponseObj>;
     
+    /** searches a set of resources based on some filter criteria */
+    search(query: QueryObj): Promise<ResponseObj>;
 
-    document(query: any): any;
-    profile(query: any): any;
-    transaction(query: any): any;
-    history(query: any): any;
-
-    validate(query: any): any;
-    search(query: any): any;
     nextPage(query: any): any;
     prevPage(query: any): any;
     resolve(query: any): any;
+
+
+    /** These functions below are not yet typescripted because the exact funticionality is not clear */
+
+    /** Validate a resource, but see see issue here first: https://github.com/FHIR/fhir.js/issues/93 */
+    validate(query: any): any;
+
+    /** POST on /Document ? */
+    document(query: any): any;
+
+    /** GET on /Profile/:type ? */
+    profile(query: any): any;    
 }

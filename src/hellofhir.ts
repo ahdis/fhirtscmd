@@ -168,122 +168,70 @@ export class HelloFhir {
             }
 
             console.log("Step 9: Delete a resource");
-            updatedPatent.debug = true;
-            response = await this.client.delete({ resource: updatedPatent, debug:true });
+            //            response = await this.client.delete({ resource: updatedPatent, debug: true });
+            response = await this.client.delete({ resource: updatedPatent });
             if (response.headers != undefined) {
                 console.log(response.status);
             }
 
+            let bundle: Entry =
+                {
+                    resource: {
+                        "resourceType": "Bundle",
+                        "id": "bundle-transaction",
+                        "meta": {
+                            "lastUpdated": "2014-08-18T01:43:30Z"
+                        },
+                        "type": "transaction",
+                        "entry": [
+                            {
+                                "fullUrl": "urn:uuid:61ebe359-bfdc-4613-8bf2-c5e300945f0a",
+                                "resource": {
+                                    "resourceType": "Patient",
+                                    "text": {
+                                        "status": "generated",
+                                        "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">Some narrative</div>"
+                                    },
+                                    "active": true,
+                                    "name": [
+                                        {
+                                            "use": "official",
+                                            "family": "Muster",
+                                            "given": [
+                                                "Felix",
+                                                "Ulrich"
+                                            ]
+                                        }
+                                    ],
+                                    "gender": "male",
+                                    "birthDate": "1974-12-25"
+                                },
+                                "request": {
+                                    "method": "POST",
+                                    "url": "Patient"
+                                }
+                            }
+                        ]
+                    }
+                }
+            console.log("Step 10: Perform a transaction");
+            response = await this.client.transaction(bundle);
+            if (response.headers != undefined) {
+                console.log(response.status);
+                console.log("Entry 0 status:" + response.data.entry[0].response.status);
+                console.log("Entry 0 location:" + response.data.entry[0].response.location);
+            }
 
+            console.log("Step 11: Search");
+            response = await this.client.search({type: "Patient", query: { birthdate: 1974 } });
+            if (response.headers != undefined) {
+                console.log(response.status);
+            }
 
         } catch (error) {
             console.log("error" + error)
         }
 
-        //  console.log(response || []);
-
-        //            console.log(response.status);
-        //            console.log(response.headers);
-        //            if (response.data) {
-        //                this.conformance = (response.data || []);
-        //                console.log("success");
-        //                console.log(response || []);
-        //           }
-        //       }, (err) => {
-        //           console.log(err);
-        //       });
-
-        /*
-        this.client.history({}).then((response) => {
-            if (response.data) {
-                this.history = (response.data || []);
-            }
-        }, (err) => {
-            console.log(err);
-        });
- 
-        this.client.resourceHistory({ type: 'Patient', id: '1707' }).then((response) => {
-            if (response.data) {
-                this.resourceHistory = (response.data || []);
-            }
-        }, (err) => {
-            console.log(err);
-        });
- 
-        this.client.search({ type: 'Patient', query: {} }).then((response) => {
-            if (response.data) {
-                this.patients = (response.data.entry || []);
-            }
-        }, (err) => {
-            console.log(err);
-        });
- 
-        this.client.read({ type: 'Condition', id: "2277" }).then((response) => {
-            if (response.data) {
-                this.condition = (response.data || {});
-            }
-        }, (err) => {
-            console.log(err);
-        });
- 
-        this.client.create(
-            {
-                resource: {
-                    "resourceType": "Observation",
-                    "meta": {
-                        "profile": ["http://www.example.ex/fhir/StructureDefinition/ExamplePersonalBelief"]
-                    },
-                    "identifier": [{
-                        "value": "b001"
-                    }],
-                    "status": "final",
-                    "category": [{
-                        "coding": [{
-                            "system": "http://hl7.org/fhir/observation-category",
-                            "code": "social-history",
-                            "display": "Social History"
-                        }]
-                    }],
-                    "code": {
-                        "coding": [{
-                            "system": "http://loinc.org",
-                            "code": "75281-6",
-                            "display": "Personal belief"
-                        }]
-                    },
-                    "subject": {
-                        "reference": "Patient/1707"
-                    },
-                    "effectiveDateTime": "2009-07-21T10:22:00+02:00",
-                    "performer": [{
-                        "reference": "Practitioner/3165"
-                    }],
-                    "valueString": "Patient refuses all blood transfusion and administration of primary blood components and minor fractions"
-                }
-            }).then((response) => {
-                this.createResponse = response;
-            }, (err) => {
-                console.log(err);
-            });
- 
- 
-*/
-
-
     }
 
-
-    // Include the adapter
-    //var nativeFhir = require('fhir.js/src/adapters/native');
-
-    // Create fhir instance
-    // var fhir = nativeFhir({
-    //     baseUrl: 'https://ci-api.fhir.me',
-    //     auth: {user: 'client', pass: 'secret'}
-    //});
-
-    // Execute the search
-    // fhir.search({type: 'Patient', query: {name: 'maud'}}).then(function(response){
-    //     //manipulate your data here.
-    // });
 }
