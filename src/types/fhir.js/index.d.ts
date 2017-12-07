@@ -22,6 +22,8 @@ type Minimal = { debug?: boolean }
 
 /** FHIR Resource Type */
 type ResourceType = { "type": string } & Minimal
+type ReferenceObj = { "reference" : string } & Minimal
+type BundleObj = { bundle: any } & Minimal;
 type ReadObj = { id: string } & ResourceType;
 type QueryObj = { query: any } & ResourceType;
 type VReadObj = { versionId: string } & ReadObj;
@@ -72,9 +74,11 @@ export interface IFhir {
     /** searches a set of resources based on some filter criteria */
     search(query: QueryObj): Promise<ResponseObj>;
 
-    nextPage(query: any): any;
-    prevPage(query: any): any;
-    resolve(query: any): any;
+     /** returns the next results in a series of pages */
+    nextPage(query: BundleObj): Promise<ResponseObj>;
+
+     /** returns the previous results in a series of pages */
+    prevPage(query: BundleObj): Promise<ResponseObj>;
 
 
     /** These functions below are not yet typescripted because the exact funticionality is not clear */
@@ -87,4 +91,8 @@ export interface IFhir {
 
     /** GET on /Profile/:type ? */
     profile(query: any): any;    
+
+    /** resolves a referenced resources, don't now how ho pass in the defer() function */
+    resolve( ref: ReferenceObj): Promise<ResponseObj>;
+        
 }

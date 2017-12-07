@@ -167,13 +167,6 @@ export class HelloFhir {
                 console.log("total entries: " + response.data.total);
             }
 
-            console.log("Step 9: Delete a resource");
-            //            response = await this.client.delete({ resource: updatedPatent, debug: true });
-            response = await this.client.delete({ resource: updatedPatent });
-            if (response.headers != undefined) {
-                console.log(response.status);
-            }
-
             let bundle: Entry =
                 {
                     resource: {
@@ -214,7 +207,7 @@ export class HelloFhir {
                         ]
                     }
                 }
-            console.log("Step 10: Perform a transaction");
+            console.log("Step 9: Perform a transaction");
             response = await this.client.transaction(bundle);
             if (response.headers != undefined) {
                 console.log(response.status);
@@ -222,12 +215,122 @@ export class HelloFhir {
                 console.log("Entry 0 location:" + response.data.entry[0].response.location);
             }
 
-            console.log("Step 11: Search");
-            response = await this.client.search({type: "Patient", query: { birthdate: 1974 } });
+            console.log("Step 10: Search for birthdate");
+            response = await this.client.search({ type: "Patient", query: { birthdate: 1974 } });
+            if (response.headers != undefined) {
+                console.log(response.status);
+                console.log("total entries: " + response.data.total);
+                console.log();
+            }
+
+            console.log("Step 11: Search for exact name");
+            response = await this.client.search({ type: "Patient", query: { name: { $and: [{ $exact: 'Muster' }, { $exact: 'Felix' }] } } });
+            if (response.headers != undefined) {
+                console.log(response.status);
+                console.log("total entries: " + response.data.total);
+                console.log();
+            }
+
+            console.log("Step 12: Create 200 observations for patientId ");
+            
+            let observation: Entry =
+            {
+                resource: {
+                    "resourceType": "Observation",
+                    "meta": {
+                        "profile": [
+                            "http://hl7.org/fhir/StructureDefinition/bodyweight"
+                        ]
+                    },
+                    "text": {
+                        "status": "generated",
+                        "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">72 kg</div>"
+                    },
+                    "status": "final",
+                    "category": [
+                        {
+                            "coding": [
+                                {
+                                    "system": "http://hl7.org/fhir/observation-category",
+                                    "code": "vital-signs",
+                                    "display": "Vital Signs"
+                                }
+                            ]
+                        }
+                    ],
+                    "code": {
+                        "coding": [
+                            {
+                                "system": "http://loinc.org",
+                                "code": "29463-7",
+                                "display": "Body Weight"
+                            },
+                            {
+                                "system": "http://loinc.org",
+                                "code": "3141-9",
+                                "display": "Body weight Measured"
+                            },
+                            {
+                                "system": "http://snomed.info/sct",
+                                "code": "27113001",
+                                "display": "Body weight"
+                            }
+                        ]
+                    },
+                    "subject": {
+                        "reference": "Patient/"+patientId
+                    },
+                    "effectiveDateTime": "2017-12-01",
+                    "valueQuantity": {
+                        "value": 72,
+                        "unit": "kg",
+                        "system": "http://unitsofmeasure.org",
+                        "code": "kg"
+                    }
+                }
+            }
+            for (let i:number = 0; i < 200; i++) {
+                // could be made async, we make it easier sequential
+                response = await this.client.create(observation);
+            }
+            console.log("200 observations created for patient "+patientId," one of this "+response.data.id);
+
+            console.log("Step 13: Search for patient observations name");
+            response = await this.client.search({ "type": "Observation", query: { "subject": "Patient/"+patientId }});
+            if (response.headers != undefined) {
+                console.log(response.status);
+                console.log("total entries: " + response.data.total);
+                console.log(response.data.link);
+                console.log();
+            }
+
+            response = await this.client.nextPage({bundle: response.data});
+            if (response.headers != undefined) {
+                console.log(response.status);
+                console.log("total entries: " + response.data.total);
+                console.log(response.data.link);
+                console.log();
+            }
+
+            // https://github.com/FHIR/fhir.js/issues/105
+            // RFC Mandates previous https://tools.ietf.org/html/rfc5005
+            // response = await this.client.prevPage({bundle: response.data});
+            // if (response.headers != undefined) {
+            //     console.log(response.status);
+            //     console.log("total entries: " + response.data.total);
+            //     console.log(response.data.link);
+            //     console.log();
+            // }
+            
+            console.log("Step 14: Creating one more patient" + patientGiven + " " + patientFamily);
+            response = await this.client.create(entry);
+
+            console.log("Step 15: Delete a resource just created before");
+//                        response = await this.client.delete({ resource: updatedPatent, debug: true });
+            response = await this.client.delete({ resource: response.data });
             if (response.headers != undefined) {
                 console.log(response.status);
             }
-
         } catch (error) {
             console.log("error" + error)
         }
