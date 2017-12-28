@@ -2,6 +2,7 @@
 // Project: https://github.com/FHIR/fhir.js
 // Definitions by: oliver egger, https://github.com/oliveregger
 
+
 /** resource interface */
 interface IResource {
     resourceType: string;
@@ -11,35 +12,37 @@ interface IResource {
     [others: string]: any;
 }
 
-type Auth = { bearer?: string; user?: string; pass?: string }
-type Config = { baseUrl: string; auth?: Auth; credentials: string; headers?: Map<string, any> }
+interface Auth { bearer?: string; user?: string; pass?: string }
+interface Config { baseUrl: string; auth?: Auth; credentials: string; headers?: Map<string, any> }
 // method could be refined to (GET|POST|PUT|DELETE)
-type RequestObj = { method: string; url: string, headers?: Map<string, string[]> }
-type ResponseObj = { status: number; headers?: Map<string, string[]>; config: any; data: IResource }
+interface Minimal { debug?: boolean }
+interface RequestObj extends Minimal { method: "DELETE" | "GET" | "HEAD" | "JSONP" | "OPTIONS"; url: string, headers?: any, data?: any }
+interface ResponseObj { status: number; headers?: Map<string, string[]>; config: any; data: IResource }
 
 /** set the debug property property to true to get console logging activated */
-type Minimal = { debug?: boolean }
 
 /** FHIR Resource Type */
-type ResourceType = { "type": string } & Minimal
-type ReferenceObj = { "reference" : string } & Minimal
-type BundleObj = { bundle: any } & Minimal;
-type ReadObj = { id: string } & ResourceType;
-type QueryObj = { query: any } & ResourceType;
-type VReadObj = { versionId: string } & ReadObj;
+interface ResourceType extends Minimal { "type": string }
+interface ReferenceObj extends Minimal { "reference": string }
+interface BundleObj extends Minimal { bundle: any } 
+interface ReadObj extends ResourceType { id: string }
+interface QueryObj extends ResourceType { query: any }
+interface VReadObj extends ReadObj { versionId: string }
+interface Adapter extends Minimal { http: (args: any) => Promise<any>, defer?: any }
 
 /** Create Objects */
-type Tag = { term: string; schema: string; label: string }
-type Entry = { resource: IResource; category?: Tag[] } & Minimal
+interface Tag { term: string; schema: string; label: string }
+interface Entry extends Minimal { resource: IResource; category?: Tag[] } 
 
-declare function http(requestObj: RequestObj): Promise<IFhir>;
+declare function http(requestObj: RequestObj): Promise<ResponseObj>;
 
 // to declard headerFn function to get header, i.e. headerFn('Content')
 declare function succes(data: any, status: any, headerFn: any, config: Config): void;
 declare function error(data: any, status: any, headerFn: any, config: Config): void;
 
 /** Interface defintion to fhir.js */
-export interface IFhir {
+
+interface IFhir {
 
     /** Get a capability statement for the system */
     conformance(empty: Minimal): Promise<ResponseObj>;
@@ -70,14 +73,14 @@ export interface IFhir {
 
     /** The transaction interactions submit a set of actions to perform on a server in a single HTTP request/response. */
     transaction(bundle: Entry): Promise<ResponseObj>;
-    
+
     /** searches a set of resources based on some filter criteria */
     search(query: QueryObj): Promise<ResponseObj>;
 
-     /** returns the next results in a series of pages */
+    /** returns the next results in a series of pages */
     nextPage(query: BundleObj): Promise<ResponseObj>;
 
-     /** returns the previous results in a series of pages */
+    /** returns the previous results in a series of pages */
     prevPage(query: BundleObj): Promise<ResponseObj>;
 
 
@@ -90,9 +93,11 @@ export interface IFhir {
     document(query: any): any;
 
     /** GET on /Profile/:type ? */
-    profile(query: any): any;    
+    profile(query: any): any;
 
     /** resolves a referenced resources, don't now how ho pass in the defer() function */
-    resolve( ref: ReferenceObj): Promise<ResponseObj>;
-        
+    resolve(ref: ReferenceObj): Promise<ResponseObj>;
+
 }
+
+declare function fhir(x: Config, a: Adapter) : IFhir;

@@ -15,9 +15,14 @@ commander.command('hellofhir').alias('f').description('Hello Fhir').action(() =>
     new HelloFhir().testApi();
 })
 
+commander.command('createpatient').alias('c').description('Create a paitent').action(() => {
+    new HelloFhir().testCreate();
+})
+
+
 if(!process.argv.slice(2).length/* || !/[arudl]/.test(process.argv.slice(2))*/) {
     commander.outputHelp()
     process.exit()
 }
 
-commander.parse(process.argv)
+commander.parse(process.argv);

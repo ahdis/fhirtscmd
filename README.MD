@@ -27,6 +27,13 @@ npm install
 
 ```
 
+Using a local hapi fhir server, download, install from http://hapifhir.io/doc_cli.html
+
+```
+cd /Applications/hapi-fhir-3.1.0-cli
+./hapi-fhir-cli run-server
+```
+
 ## API
 
 

@@ -1,7 +1,8 @@
 /// <reference path="types/fhir.js/src/adapters/native/index.d.ts" />
 /// <reference path="types/fhir.js/index.d.ts" />
 import { IFhir, Config, ResponseObj, Entry, IResource, ResourceType, ReadObj, VReadObj } from 'fhir.js';
-import nativeFhir = require('fhir.js/src/adapters/native');
+//import fhirAdapter = require('fhir.js/src/adapters/native');
+import fhirAdapter = require('fhir.js/src/adapters/node');
 
 export class HelloFhir {
 
@@ -16,12 +17,34 @@ export class HelloFhir {
 
     private config: Config = {
         //        baseUrl: 'http://fhirtest.uhn.ca/baseDstu3',
-        baseUrl: 'http://localhost:8080/baseDstu3/',
+        baseUrl: 'http://localhost:8080/baseDstu3',
         credentials: 'same-origin'
     };
 
     constructor() {
-        this.client = nativeFhir(this.config);
+        this.client = fhirAdapter(this.config);
+    }
+
+    async testCreate() {
+
+        try {
+
+            console.log("Creating a the patient");
+            let entry: Entry =
+                {
+                    resource: {
+                        "resourceType": "Patient"
+                    }
+                }
+            entry.debug = true;
+            let response = await this.client.create(entry);
+            console.log(JSON.stringify(response));
+        } catch (error) {
+            console.log("error")
+            console.log(JSON.stringify(error));
+
+        }
+
     }
 
     async testApi() {
@@ -45,8 +68,11 @@ export class HelloFhir {
             let response: ResponseObj = await this.client.conformance({});
             if (response.headers != undefined) {
                 console.log(response.status);
-                console.log(response.headers.get("server"))
-                console.log(response.headers.get("x-powered-by"))
+                if (response.headers != undefined) {
+                    console.log("here:" + response.headers);
+                    console.log(response.headers.get("server"))
+                    console.log(response.headers.get("x-powered-by"))
+                }
             }
 
             console.log("Step 2: Creating the patient" + patientGiven + " " + patientFamily);
@@ -79,6 +105,7 @@ export class HelloFhir {
                 }
 
             response = await this.client.create(entry);
+            console.log(JSON.stringify(response));
 
             let createdPatient: IResource = response.data;
 
@@ -232,71 +259,71 @@ export class HelloFhir {
             }
 
             console.log("Step 12: Create 200 observations for patientId ");
-            
+
             let observation: Entry =
-            {
-                resource: {
-                    "resourceType": "Observation",
-                    "meta": {
-                        "profile": [
-                            "http://hl7.org/fhir/StructureDefinition/bodyweight"
-                        ]
-                    },
-                    "text": {
-                        "status": "generated",
-                        "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">72 kg</div>"
-                    },
-                    "status": "final",
-                    "category": [
-                        {
+                {
+                    resource: {
+                        "resourceType": "Observation",
+                        "meta": {
+                            "profile": [
+                                "http://hl7.org/fhir/StructureDefinition/bodyweight"
+                            ]
+                        },
+                        "text": {
+                            "status": "generated",
+                            "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">72 kg</div>"
+                        },
+                        "status": "final",
+                        "category": [
+                            {
+                                "coding": [
+                                    {
+                                        "system": "http://hl7.org/fhir/observation-category",
+                                        "code": "vital-signs",
+                                        "display": "Vital Signs"
+                                    }
+                                ]
+                            }
+                        ],
+                        "code": {
                             "coding": [
                                 {
-                                    "system": "http://hl7.org/fhir/observation-category",
-                                    "code": "vital-signs",
-                                    "display": "Vital Signs"
+                                    "system": "http://loinc.org",
+                                    "code": "29463-7",
+                                    "display": "Body Weight"
+                                },
+                                {
+                                    "system": "http://loinc.org",
+                                    "code": "3141-9",
+                                    "display": "Body weight Measured"
+                                },
+                                {
+                                    "system": "http://snomed.info/sct",
+                                    "code": "27113001",
+                                    "display": "Body weight"
                                 }
                             ]
+                        },
+                        "subject": {
+                            "reference": "Patient/" + patientId
+                        },
+                        "effectiveDateTime": "2017-12-01",
+                        "valueQuantity": {
+                            "value": 72,
+                            "unit": "kg",
+                            "system": "http://unitsofmeasure.org",
+                            "code": "kg"
                         }
-                    ],
-                    "code": {
-                        "coding": [
-                            {
-                                "system": "http://loinc.org",
-                                "code": "29463-7",
-                                "display": "Body Weight"
-                            },
-                            {
-                                "system": "http://loinc.org",
-                                "code": "3141-9",
-                                "display": "Body weight Measured"
-                            },
-                            {
-                                "system": "http://snomed.info/sct",
-                                "code": "27113001",
-                                "display": "Body weight"
-                            }
-                        ]
-                    },
-                    "subject": {
-                        "reference": "Patient/"+patientId
-                    },
-                    "effectiveDateTime": "2017-12-01",
-                    "valueQuantity": {
-                        "value": 72,
-                        "unit": "kg",
-                        "system": "http://unitsofmeasure.org",
-                        "code": "kg"
                     }
                 }
-            }
-            for (let i:number = 0; i < 200; i++) {
+            for (let i: number = 0; i < 200; i++) {
                 // could be made async, we make it easier sequential
                 response = await this.client.create(observation);
             }
-            console.log("200 observations created for patient "+patientId," one of this "+response.data.id);
+            console.log("200 observations created for patient " + patientId, " one of this " + response.data.id);
 
             console.log("Step 13: Search for patient observations name");
-            response = await this.client.search({ "type": "Observation", query: { "subject": "Patient/"+patientId }});
+            response = await this.client.search({ "type": "Observation", query: { "subject": "Patient/" + patientId } });
             if (response.headers != undefined) {
                 console.log(response.status);
                 console.log("total entries: " + response.data.total);
@@ -304,7 +331,7 @@ export class HelloFhir {
                 console.log();
             }
 
-            response = await this.client.nextPage({bundle: response.data});
+            response = await this.client.nextPage({ bundle: response.data });
             if (response.headers != undefined) {
                 console.log(response.status);
                 console.log("total entries: " + response.data.total);
@@ -312,27 +339,27 @@ export class HelloFhir {
                 console.log();
             }
 
-            // https://github.com/FHIR/fhir.js/issues/105
-            // RFC Mandates previous https://tools.ietf.org/html/rfc5005
-            // response = await this.client.prevPage({bundle: response.data});
-            // if (response.headers != undefined) {
-            //     console.log(response.status);
-            //     console.log("total entries: " + response.data.total);
-            //     console.log(response.data.link);
-            //     console.log();
-            // }
-            
+            response = await this.client.prevPage({ bundle: response.data });
+            if (response.headers != undefined) {
+                console.log(response.status);
+                console.log("total entries: " + response.data.total);
+                console.log(response.data.link);
+                console.log();
+            }
+
             console.log("Step 14: Creating one more patient" + patientGiven + " " + patientFamily);
             response = await this.client.create(entry);
 
             console.log("Step 15: Delete a resource just created before");
-//                        response = await this.client.delete({ resource: updatedPatent, debug: true });
+            //                        response = await this.client.delete({ resource: updatedPatent, debug: true });
             response = await this.client.delete({ resource: response.data });
             if (response.headers != undefined) {
                 console.log(response.status);
             }
         } catch (error) {
-            console.log("error" + error)
+            console.log("error")
+            console.log(JSON.stringify(error));
+
         }
 
     }
