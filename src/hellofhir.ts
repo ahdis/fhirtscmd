@@ -1,8 +1,6 @@
-/// <reference path="types/fhir.js/src/adapters/native/index.d.ts" />
+/// <reference path="types/fhir.js/src/adapters/node/index.d.ts" />
 /// <reference path="types/fhir.js/index.d.ts" />
-import { IFhir, Config, ResponseObj, Entry, IResource, ResourceType, ReadObj, VReadObj } from 'fhir.js';
-//import fhirAdapter = require('fhir.js/src/adapters/native');
-import fhirAdapter = require('fhir.js/src/adapters/node');
+const fhirAdapter = require('fhir.js/src/adapters/node');
 
 export class HelloFhir {
 
