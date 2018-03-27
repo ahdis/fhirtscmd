@@ -60,8 +60,9 @@ export class HelloFhir {
             let patientGiven: string = "Fälix";
             let patientFamily: string = "Müster";
             let debug: boolean = true;
-            //            let response: ResponseObj = await this.client.conformance({ "debug": true});
-
+//            let response: ResponseObj;
+//            let response: ResponseObj = await this.client.conformance({ "debug": true});
+ 
             console.log("Step 1: Calling conformance statement")
             let response: ResponseObj = await this.client.conformance({});
             if (response.headers != undefined) {
@@ -117,6 +118,8 @@ export class HelloFhir {
                     patientVersionId = response.data.meta.versionId;
                 }
             }
+           /*
+
             console.log("Step 3: Reading patient" + patientGiven + " " + patientFamily + " with id back");
             let read: ReadObj = { id: patientId, type: "Patient" };
             response = await this.client.read(read)
@@ -135,22 +138,26 @@ export class HelloFhir {
             }
 
             console.log("Step 4: Retrieve the change history for all resources");
-            response = await this.client.history({});
+            response = await this.client.history({ "debug": true});
             if (response.headers != undefined) {
                 console.log(response.status);
                 console.log("total entries: " + response.data.total);
+                console.log(JSON.stringify(response.data));
             }
 
             console.log("Step 5: Retrieve the change history for a particular resource type ");
-            response = await this.client.typeHistory({ type: "Patient" });
+            response = await this.client.typeHistory({ debug: true, type: "Patient" });
             if (response.headers != undefined) {
                 console.log(response.status);
                 console.log("total entries: " + response.data.total);
+                console.log(JSON.stringify(response.data));
             }
+
 
             console.log("Step 6: Update an existing resource by its id");
             createdPatient.name[0].family = "Muster";
-            response = await this.client.update({ resource: createdPatient });
+            createdPatient.meta = undefined;
+            response = await this.client.update({ debug: true, resource: createdPatient });
             let updatedPatent: IResource = response.data;
             if (response.headers != undefined) {
                 console.log(response.status);
@@ -159,10 +166,16 @@ export class HelloFhir {
                 } else {
                     console.log("ERROR: name not updated");
                 }
+                if (response.data.id != undefined) {
+                    patientId = response.data.id;
+                    patientVersionId = response.data.meta.versionId;
+                    console.log("paitentMetaVersionId "+patientVersionId);
+                }
             }
 
+
             console.log("Step 7: Read the state of a specific version of the resource");
-            response = await this.client.vread({ id: patientId, versionId: patientVersionId, type: "Patient" });
+            response = await this.client.vread({ debug:true, id: patientId, versionId: patientVersionId, type: "Patient" });
             if (response.headers != undefined) {
                 console.log(response.status);
 
@@ -178,11 +191,12 @@ export class HelloFhir {
                 else {
                     console.log("ERROR: version Id does not match");
                 }
-                if ("Müster" == response.data.name[0].family) {
+                if ("Muster" == response.data.name[0].family) {
                     console.log("name matches");
                 } else {
                     console.log("ERROR: name does not match");
                 }
+                console.log(JSON.stringify(response.data));
             }
 
             console.log("Step 8: Retrieve the change history for a particular resource");
@@ -190,10 +204,12 @@ export class HelloFhir {
             if (response.headers != undefined) {
                 console.log(response.status);
                 console.log("total entries: " + response.data.total);
+                console.log(JSON.stringify(response.data));
             }
 
             let bundle: Entry =
                 {
+                    debug: true,
                     resource: {
                         "resourceType": "Bundle",
                         "id": "bundle-transaction",
@@ -238,23 +254,26 @@ export class HelloFhir {
                 console.log(response.status);
                 console.log("Entry 0 status:" + response.data.entry[0].response.status);
                 console.log("Entry 0 location:" + response.data.entry[0].response.location);
+                console.log(JSON.stringify(response.data));
             }
 
+
             console.log("Step 10: Search for birthdate");
-            response = await this.client.search({ type: "Patient", query: { birthdate: 1974 } });
+            response = await this.client.search({ debug: true, type: "Patient", query: { birthdate: 1974 } });
             if (response.headers != undefined) {
                 console.log(response.status);
                 console.log("total entries: " + response.data.total);
-                console.log();
+                console.log(JSON.stringify(response.data));
             }
 
             console.log("Step 11: Search for exact name");
-            response = await this.client.search({ type: "Patient", query: { name: { $and: [{ $exact: 'Muster' }, { $exact: 'Felix' }] } } });
+            response = await this.client.search({ debug: true, type: "Patient", query: { name: { $and: [{ $exact: 'Muster' }, { $exact: 'Felix' }] } } });
             if (response.headers != undefined) {
                 console.log(response.status);
                 console.log("total entries: " + response.data.total);
-                console.log();
+                console.log(JSON.stringify(response.data));
             }
+
 
             console.log("Step 12: Create 200 observations for patientId ");
 
@@ -321,39 +340,45 @@ export class HelloFhir {
             console.log("200 observations created for patient " + patientId, " one of this " + response.data.id);
 
             console.log("Step 13: Search for patient observations name");
-            response = await this.client.search({ "type": "Observation", query: { "subject": "Patient/" + patientId } });
+            response = await this.client.search({ debug: true, "type": "Observation", query: { "subject": "Patient/" + patientId } });
             if (response.headers != undefined) {
                 console.log(response.status);
                 console.log("total entries: " + response.data.total);
                 console.log(response.data.link);
-                console.log();
+                console.log(JSON.stringify(response.data));
             }
 
+            console.log("Step 13: next page");
             response = await this.client.nextPage({ bundle: response.data });
             if (response.headers != undefined) {
                 console.log(response.status);
                 console.log("total entries: " + response.data.total);
                 console.log(response.data.link);
-                console.log();
+                console.log(JSON.stringify(response.data));
             }
 
+            console.log("Step 13: previous page");
             response = await this.client.prevPage({ bundle: response.data });
             if (response.headers != undefined) {
                 console.log(response.status);
                 console.log("total entries: " + response.data.total);
                 console.log(response.data.link);
-                console.log();
+                console.log(JSON.stringify(response.data));
             }
+            */
 
             console.log("Step 14: Creating one more patient" + patientGiven + " " + patientFamily);
             response = await this.client.create(entry);
 
             console.log("Step 15: Delete a resource just created before");
             //                        response = await this.client.delete({ resource: updatedPatent, debug: true });
-            response = await this.client.delete({ resource: response.data });
+            response = await this.client.delete({ debug: true, resource: response.data });
+            console.log(JSON.stringify(response.data));
             if (response.headers != undefined) {
                 console.log(response.status);
+                console.log(JSON.stringify(response.headers));
             }
+
         } catch (error) {
             console.log("error")
             console.log(JSON.stringify(error));

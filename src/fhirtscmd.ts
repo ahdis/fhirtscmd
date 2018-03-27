@@ -2,6 +2,7 @@
 import * as commander from 'commander'
 import { HelloWorld } from "./helloworld"
 import { HelloFhir } from "./hellofhir"
+import { Uuid } from "./uuid"
 
 commander
     .version('0.0.1')
@@ -19,6 +20,9 @@ commander.command('createpatient').alias('c').description('Create a paitent').ac
     new HelloFhir().testCreate();
 })
 
+commander.command('uuid').alias('u').description('Generate a UUID for CDA').action(() => {
+    console.log(new Uuid().getUuidCda());
+})
 
 if(!process.argv.slice(2).length/* || !/[arudl]/.test(process.argv.slice(2))*/) {
     commander.outputHelp()
