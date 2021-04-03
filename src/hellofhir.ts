@@ -14,8 +14,9 @@ export class HelloFhir {
     private createResponse: any = {};
 
     private config: Config = {
-        //        baseUrl: 'http://fhirtest.uhn.ca/baseDstu3',
-        baseUrl: 'http://localhost:8080/baseDstu3',
+//        baseUrl: 'https://test.ahdis.ch/hapi-fhir-jpavalidator/fhir',
+        baseUrl: 'http://localhost:8080/r4',
+        // baseUrl: 'http://localhost:8080/baseDstu3',
         credentials: 'same-origin'
     };
 
@@ -29,11 +30,11 @@ export class HelloFhir {
 
             console.log("Creating a the patient");
             let entry: Entry =
-                {
-                    resource: {
-                        "resourceType": "Patient"
-                    }
+            {
+                resource: {
+                    "resourceType": "Patient"
                 }
+            }
             entry.debug = true;
             let response = await this.client.create(entry);
             console.log(JSON.stringify(response));
@@ -60,48 +61,49 @@ export class HelloFhir {
             let patientGiven: string = "Fälix";
             let patientFamily: string = "Müster";
             let debug: boolean = true;
-//            let response: ResponseObj;
-//            let response: ResponseObj = await this.client.conformance({ "debug": true});
- 
+            //            let response: ResponseObj;
+            //          let response: ResponseObj = await this.client.conformance({ "debug": true});
+
             console.log("Step 1: Calling conformance statement")
-            let response: ResponseObj = await this.client.conformance({});
+            let response: ResponseObj = await this.client.conformance({ "debug": false });
             if (response.headers != undefined) {
                 console.log(response.status);
                 if (response.headers != undefined) {
                     console.log("here:" + response.headers);
-                    console.log(response.headers.get("server"))
-                    console.log(response.headers.get("x-powered-by"))
+
+//                        console.log(response.headers.get("server"))
+//                    console.log(response.headers.get("x-powered-by"))
                 }
             }
 
             console.log("Step 2: Creating the patient" + patientGiven + " " + patientFamily);
             let entry: Entry =
-                {
-                    resource: {
-                        "resourceType": "Patient",
-                        "text": {
-                            "status": "generated",
-                            "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">" + patientGiven + " " + patientFamily + "</div>"
-                        },
-                        "name": [
-                            {
-                                "family": patientFamily,
-                                "given": [patientGiven]
-                            }
-                        ],
-                        "gender": "male",
-                        "birthDate": "1971-12-04",
-                        "address": [
-                            {
-                                "line": [
-                                    "Leidensweg 10"
-                                ],
-                                "city": "Specimendorf",
-                                "postalCode": "9876"
-                            }
-                        ]
-                    }
+            {
+                resource: {
+                    "resourceType": "Patient",
+                    "text": {
+                        "status": "generated",
+                        "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">" + patientGiven + " " + patientFamily + "</div>"
+                    },
+                    "name": [
+                        {
+                            "family": patientFamily,
+                            "given": [patientGiven]
+                        }
+                    ],
+                    "gender": "male",
+                    "birthDate": "1971-12-04",
+                    "address": [
+                        {
+                            "line": [
+                                "Leidensweg 10"
+                            ],
+                            "city": "Specimendorf",
+                            "postalCode": "9876"
+                        }
+                    ]
                 }
+            }
 
             response = await this.client.create(entry);
             console.log(JSON.stringify(response));
@@ -118,254 +120,254 @@ export class HelloFhir {
                     patientVersionId = response.data.meta.versionId;
                 }
             }
-           /*
-
-            console.log("Step 3: Reading patient" + patientGiven + " " + patientFamily + " with id back");
-            let read: ReadObj = { id: patientId, type: "Patient" };
-            response = await this.client.read(read)
-
-            if (response.headers != undefined) {
-                console.log(response.status);
-                console.log("id: " + response.data.id);
-
-                // astonished that this here works in typescript, name and family is not tpyed
-                if (response.data.name[0].family == patientFamily) {
-                    console.log("family name matches")
-                }
-                if (response.data.name[0].given[0] == patientGiven) {
-                    console.log("given name matches")
-                }
-            }
-
-            console.log("Step 4: Retrieve the change history for all resources");
-            response = await this.client.history({ "debug": true});
-            if (response.headers != undefined) {
-                console.log(response.status);
-                console.log("total entries: " + response.data.total);
-                console.log(JSON.stringify(response.data));
-            }
-
-            console.log("Step 5: Retrieve the change history for a particular resource type ");
-            response = await this.client.typeHistory({ debug: true, type: "Patient" });
-            if (response.headers != undefined) {
-                console.log(response.status);
-                console.log("total entries: " + response.data.total);
-                console.log(JSON.stringify(response.data));
-            }
-
-
-            console.log("Step 6: Update an existing resource by its id");
-            createdPatient.name[0].family = "Muster";
-            createdPatient.meta = undefined;
-            response = await this.client.update({ debug: true, resource: createdPatient });
-            let updatedPatent: IResource = response.data;
-            if (response.headers != undefined) {
-                console.log(response.status);
-                if ("Muster" == response.data.name[0].family) {
-                    console.log("name updated");
-                } else {
-                    console.log("ERROR: name not updated");
-                }
-                if (response.data.id != undefined) {
-                    patientId = response.data.id;
-                    patientVersionId = response.data.meta.versionId;
-                    console.log("paitentMetaVersionId "+patientVersionId);
-                }
-            }
-
-
-            console.log("Step 7: Read the state of a specific version of the resource");
-            response = await this.client.vread({ debug:true, id: patientId, versionId: patientVersionId, type: "Patient" });
-            if (response.headers != undefined) {
-                console.log(response.status);
-
-                if (patientId == response.data.id) {
-                    console.log("patient id matches");
-                }
-                else {
-                    console.log("ERROR: patient id does not match");
-                }
-                if (patientVersionId == response.data.meta.versionId) {
-                    console.log("versionId matches");
-                }
-                else {
-                    console.log("ERROR: version Id does not match");
-                }
-                if ("Muster" == response.data.name[0].family) {
-                    console.log("name matches");
-                } else {
-                    console.log("ERROR: name does not match");
-                }
-                console.log(JSON.stringify(response.data));
-            }
-
-            console.log("Step 8: Retrieve the change history for a particular resource");
-            response = await this.client.resourceHistory({ id: patientId, type: "Patient" });
-            if (response.headers != undefined) {
-                console.log(response.status);
-                console.log("total entries: " + response.data.total);
-                console.log(JSON.stringify(response.data));
-            }
-
-            let bundle: Entry =
-                {
-                    debug: true,
-                    resource: {
-                        "resourceType": "Bundle",
-                        "id": "bundle-transaction",
-                        "meta": {
-                            "lastUpdated": "2014-08-18T01:43:30Z"
-                        },
-                        "type": "transaction",
-                        "entry": [
-                            {
-                                "fullUrl": "urn:uuid:61ebe359-bfdc-4613-8bf2-c5e300945f0a",
-                                "resource": {
-                                    "resourceType": "Patient",
-                                    "text": {
-                                        "status": "generated",
-                                        "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">Some narrative</div>"
-                                    },
-                                    "active": true,
-                                    "name": [
-                                        {
-                                            "use": "official",
-                                            "family": "Muster",
-                                            "given": [
-                                                "Felix",
-                                                "Ulrich"
-                                            ]
-                                        }
-                                    ],
-                                    "gender": "male",
-                                    "birthDate": "1974-12-25"
-                                },
-                                "request": {
-                                    "method": "POST",
-                                    "url": "Patient"
-                                }
-                            }
-                        ]
-                    }
-                }
-            console.log("Step 9: Perform a transaction");
-            response = await this.client.transaction(bundle);
-            if (response.headers != undefined) {
-                console.log(response.status);
-                console.log("Entry 0 status:" + response.data.entry[0].response.status);
-                console.log("Entry 0 location:" + response.data.entry[0].response.location);
-                console.log(JSON.stringify(response.data));
-            }
-
-
-            console.log("Step 10: Search for birthdate");
-            response = await this.client.search({ debug: true, type: "Patient", query: { birthdate: 1974 } });
-            if (response.headers != undefined) {
-                console.log(response.status);
-                console.log("total entries: " + response.data.total);
-                console.log(JSON.stringify(response.data));
-            }
-
-            console.log("Step 11: Search for exact name");
-            response = await this.client.search({ debug: true, type: "Patient", query: { name: { $and: [{ $exact: 'Muster' }, { $exact: 'Felix' }] } } });
-            if (response.headers != undefined) {
-                console.log(response.status);
-                console.log("total entries: " + response.data.total);
-                console.log(JSON.stringify(response.data));
-            }
-
-
-            console.log("Step 12: Create 200 observations for patientId ");
-
-            let observation: Entry =
-                {
-                    resource: {
-                        "resourceType": "Observation",
-                        "meta": {
-                            "profile": [
-                                "http://hl7.org/fhir/StructureDefinition/bodyweight"
-                            ]
-                        },
-                        "text": {
-                            "status": "generated",
-                            "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">72 kg</div>"
-                        },
-                        "status": "final",
-                        "category": [
-                            {
-                                "coding": [
-                                    {
-                                        "system": "http://hl7.org/fhir/observation-category",
-                                        "code": "vital-signs",
-                                        "display": "Vital Signs"
-                                    }
-                                ]
-                            }
-                        ],
-                        "code": {
-                            "coding": [
-                                {
-                                    "system": "http://loinc.org",
-                                    "code": "29463-7",
-                                    "display": "Body Weight"
-                                },
-                                {
-                                    "system": "http://loinc.org",
-                                    "code": "3141-9",
-                                    "display": "Body weight Measured"
-                                },
-                                {
-                                    "system": "http://snomed.info/sct",
-                                    "code": "27113001",
-                                    "display": "Body weight"
-                                }
-                            ]
-                        },
-                        "subject": {
-                            "reference": "Patient/" + patientId
-                        },
-                        "effectiveDateTime": "2017-12-01",
-                        "valueQuantity": {
-                            "value": 72,
-                            "unit": "kg",
-                            "system": "http://unitsofmeasure.org",
-                            "code": "kg"
-                        }
-                    }
-                }
-            for (let i: number = 0; i < 200; i++) {
-                // could be made async, we make it easier sequential
-                response = await this.client.create(observation);
-            }
-            console.log("200 observations created for patient " + patientId, " one of this " + response.data.id);
-
-            console.log("Step 13: Search for patient observations name");
-            response = await this.client.search({ debug: true, "type": "Observation", query: { "subject": "Patient/" + patientId } });
-            if (response.headers != undefined) {
-                console.log(response.status);
-                console.log("total entries: " + response.data.total);
-                console.log(response.data.link);
-                console.log(JSON.stringify(response.data));
-            }
-
-            console.log("Step 13: next page");
-            response = await this.client.nextPage({ bundle: response.data });
-            if (response.headers != undefined) {
-                console.log(response.status);
-                console.log("total entries: " + response.data.total);
-                console.log(response.data.link);
-                console.log(JSON.stringify(response.data));
-            }
-
-            console.log("Step 13: previous page");
-            response = await this.client.prevPage({ bundle: response.data });
-            if (response.headers != undefined) {
-                console.log(response.status);
-                console.log("total entries: " + response.data.total);
-                console.log(response.data.link);
-                console.log(JSON.stringify(response.data));
-            }
-            */
+            /*
+ 
+             console.log("Step 3: Reading patient" + patientGiven + " " + patientFamily + " with id back");
+             let read: ReadObj = { id: patientId, type: "Patient" };
+             response = await this.client.read(read)
+ 
+             if (response.headers != undefined) {
+                 console.log(response.status);
+                 console.log("id: " + response.data.id);
+ 
+                 // astonished that this here works in typescript, name and family is not tpyed
+                 if (response.data.name[0].family == patientFamily) {
+                     console.log("family name matches")
+                 }
+                 if (response.data.name[0].given[0] == patientGiven) {
+                     console.log("given name matches")
+                 }
+             }
+ 
+             console.log("Step 4: Retrieve the change history for all resources");
+             response = await this.client.history({ "debug": true});
+             if (response.headers != undefined) {
+                 console.log(response.status);
+                 console.log("total entries: " + response.data.total);
+                 console.log(JSON.stringify(response.data));
+             }
+ 
+             console.log("Step 5: Retrieve the change history for a particular resource type ");
+             response = await this.client.typeHistory({ debug: true, type: "Patient" });
+             if (response.headers != undefined) {
+                 console.log(response.status);
+                 console.log("total entries: " + response.data.total);
+                 console.log(JSON.stringify(response.data));
+             }
+ 
+ 
+             console.log("Step 6: Update an existing resource by its id");
+             createdPatient.name[0].family = "Muster";
+             createdPatient.meta = undefined;
+             response = await this.client.update({ debug: true, resource: createdPatient });
+             let updatedPatent: IResource = response.data;
+             if (response.headers != undefined) {
+                 console.log(response.status);
+                 if ("Muster" == response.data.name[0].family) {
+                     console.log("name updated");
+                 } else {
+                     console.log("ERROR: name not updated");
+                 }
+                 if (response.data.id != undefined) {
+                     patientId = response.data.id;
+                     patientVersionId = response.data.meta.versionId;
+                     console.log("paitentMetaVersionId "+patientVersionId);
+                 }
+             }
+ 
+ 
+             console.log("Step 7: Read the state of a specific version of the resource");
+             response = await this.client.vread({ debug:true, id: patientId, versionId: patientVersionId, type: "Patient" });
+             if (response.headers != undefined) {
+                 console.log(response.status);
+ 
+                 if (patientId == response.data.id) {
+                     console.log("patient id matches");
+                 }
+                 else {
+                     console.log("ERROR: patient id does not match");
+                 }
+                 if (patientVersionId == response.data.meta.versionId) {
+                     console.log("versionId matches");
+                 }
+                 else {
+                     console.log("ERROR: version Id does not match");
+                 }
+                 if ("Muster" == response.data.name[0].family) {
+                     console.log("name matches");
+                 } else {
+                     console.log("ERROR: name does not match");
+                 }
+                 console.log(JSON.stringify(response.data));
+             }
+ 
+             console.log("Step 8: Retrieve the change history for a particular resource");
+             response = await this.client.resourceHistory({ id: patientId, type: "Patient" });
+             if (response.headers != undefined) {
+                 console.log(response.status);
+                 console.log("total entries: " + response.data.total);
+                 console.log(JSON.stringify(response.data));
+             }
+ 
+             let bundle: Entry =
+                 {
+                     debug: true,
+                     resource: {
+                         "resourceType": "Bundle",
+                         "id": "bundle-transaction",
+                         "meta": {
+                             "lastUpdated": "2014-08-18T01:43:30Z"
+                         },
+                         "type": "transaction",
+                         "entry": [
+                             {
+                                 "fullUrl": "urn:uuid:61ebe359-bfdc-4613-8bf2-c5e300945f0a",
+                                 "resource": {
+                                     "resourceType": "Patient",
+                                     "text": {
+                                         "status": "generated",
+                                         "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">Some narrative</div>"
+                                     },
+                                     "active": true,
+                                     "name": [
+                                         {
+                                             "use": "official",
+                                             "family": "Muster",
+                                             "given": [
+                                                 "Felix",
+                                                 "Ulrich"
+                                             ]
+                                         }
+                                     ],
+                                     "gender": "male",
+                                     "birthDate": "1974-12-25"
+                                 },
+                                 "request": {
+                                     "method": "POST",
+                                     "url": "Patient"
+                                 }
+                             }
+                         ]
+                     }
+                 }
+             console.log("Step 9: Perform a transaction");
+             response = await this.client.transaction(bundle);
+             if (response.headers != undefined) {
+                 console.log(response.status);
+                 console.log("Entry 0 status:" + response.data.entry[0].response.status);
+                 console.log("Entry 0 location:" + response.data.entry[0].response.location);
+                 console.log(JSON.stringify(response.data));
+             }
+ 
+ 
+             console.log("Step 10: Search for birthdate");
+             response = await this.client.search({ debug: true, type: "Patient", query: { birthdate: 1974 } });
+             if (response.headers != undefined) {
+                 console.log(response.status);
+                 console.log("total entries: " + response.data.total);
+                 console.log(JSON.stringify(response.data));
+             }
+ 
+             console.log("Step 11: Search for exact name");
+             response = await this.client.search({ debug: true, type: "Patient", query: { name: { $and: [{ $exact: 'Muster' }, { $exact: 'Felix' }] } } });
+             if (response.headers != undefined) {
+                 console.log(response.status);
+                 console.log("total entries: " + response.data.total);
+                 console.log(JSON.stringify(response.data));
+             }
+ 
+ 
+             console.log("Step 12: Create 200 observations for patientId ");
+ 
+             let observation: Entry =
+                 {
+                     resource: {
+                         "resourceType": "Observation",
+                         "meta": {
+                             "profile": [
+                                 "http://hl7.org/fhir/StructureDefinition/bodyweight"
+                             ]
+                         },
+                         "text": {
+                             "status": "generated",
+                             "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">72 kg</div>"
+                         },
+                         "status": "final",
+                         "category": [
+                             {
+                                 "coding": [
+                                     {
+                                         "system": "http://hl7.org/fhir/observation-category",
+                                         "code": "vital-signs",
+                                         "display": "Vital Signs"
+                                     }
+                                 ]
+                             }
+                         ],
+                         "code": {
+                             "coding": [
+                                 {
+                                     "system": "http://loinc.org",
+                                     "code": "29463-7",
+                                     "display": "Body Weight"
+                                 },
+                                 {
+                                     "system": "http://loinc.org",
+                                     "code": "3141-9",
+                                     "display": "Body weight Measured"
+                                 },
+                                 {
+                                     "system": "http://snomed.info/sct",
+                                     "code": "27113001",
+                                     "display": "Body weight"
+                                 }
+                             ]
+                         },
+                         "subject": {
+                             "reference": "Patient/" + patientId
+                         },
+                         "effectiveDateTime": "2017-12-01",
+                         "valueQuantity": {
+                             "value": 72,
+                             "unit": "kg",
+                             "system": "http://unitsofmeasure.org",
+                             "code": "kg"
+                         }
+                     }
+                 }
+             for (let i: number = 0; i < 200; i++) {
+                 // could be made async, we make it easier sequential
+                 response = await this.client.create(observation);
+             }
+             console.log("200 observations created for patient " + patientId, " one of this " + response.data.id);
+ 
+             console.log("Step 13: Search for patient observations name");
+             response = await this.client.search({ debug: true, "type": "Observation", query: { "subject": "Patient/" + patientId } });
+             if (response.headers != undefined) {
+                 console.log(response.status);
+                 console.log("total entries: " + response.data.total);
+                 console.log(response.data.link);
+                 console.log(JSON.stringify(response.data));
+             }
+ 
+             console.log("Step 13: next page");
+             response = await this.client.nextPage({ bundle: response.data });
+             if (response.headers != undefined) {
+                 console.log(response.status);
+                 console.log("total entries: " + response.data.total);
+                 console.log(response.data.link);
+                 console.log(JSON.stringify(response.data));
+             }
+ 
+             console.log("Step 13: previous page");
+             response = await this.client.prevPage({ bundle: response.data });
+             if (response.headers != undefined) {
+                 console.log(response.status);
+                 console.log("total entries: " + response.data.total);
+                 console.log(response.data.link);
+                 console.log(JSON.stringify(response.data));
+             }
+             */
 
             console.log("Step 14: Creating one more patient" + patientGiven + " " + patientFamily);
             response = await this.client.create(entry);

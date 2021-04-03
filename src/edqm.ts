@@ -58,7 +58,7 @@ var options = {
     }
 };
 
-// console.log('starting call to' + uri);
+//console.log('starting call to' + uri);
 // console.log(options);
 
 const req = https.request(options, (res) => {
@@ -74,7 +74,9 @@ const req = https.request(options, (res) => {
 
         const replacer = (key:string, value:any) => value === null ? '' : value;
 
-        const header = Object.keys(items[0]);
+        const header = ["class","code","domain","status","creation_date","modification_date","english","definition","version","version_date","de_de","fr_fr","it_it"];
+
+//        const header = Object.keys(items[0]);
         let csv = items.map(row => header.map(fieldName => JSON.stringify(row[fieldName], replacer)).join(','));
         csv.unshift(header.join(','));
         csv = csv.join('\r\n');

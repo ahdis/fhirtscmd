@@ -2,3 +2,7 @@
 dist
 node_modules
 .
+package-lock.json
+roa.csv
+pdf.csv
+valueset_edqm_pdf.xml

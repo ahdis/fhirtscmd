@@ -50,6 +50,12 @@ HAPI FHIR 3.1.0 REST Server (FHIR Server; FHIR 3.0.1/DSTU3)
 
 ```
 
+### UUID utility
+
+ts-node src/fhirtscmd.ts uuid
+upper case: CDA
+lower case: FHIR
+
 ### EDQM utility
 
 https://standardterms.edqm.eu
