@@ -13,7 +13,7 @@
     "commander": "^2.12.1",
     "es6-promise": "^4.1.1",
     "fhir-kit-client": "^1.6.3",
-    "fhir.js": "0.0.20",
+    "fhir.js": "0.0.22",
     "isomorphic-fetch": "^2.2.1",
     "ng-fhir": "^2.3.0",
     "ts-node": "^3.3.0",
